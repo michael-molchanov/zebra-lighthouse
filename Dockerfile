@@ -37,6 +37,7 @@ RUN apt-get update \
   libfreetype6 \
   libfreetype6-dev \
   libmcrypt-dev \
+  libnss3-tools \
   libpng-dev \
   libxml2-dev \
   libxslt-dev \
