@@ -1,27 +1,20 @@
-FROM ubuntu:18.04
+FROM fedora:29
 
 LABEL maintainer "Michael Molchanov <mmolchanov@adyax.com>"
 
 USER root
 
-RUN  echo "deb http://archive.ubuntu.com/ubuntu bionic main universe\n" > /etc/apt/sources.list \
-  && echo "deb http://archive.ubuntu.com/ubuntu bionic-updates main universe\n" >> /etc/apt/sources.list \
-  && echo "deb http://security.ubuntu.com/ubuntu bionic-security main universe\n" >> /etc/apt/sources.list
-
-# No interactive frontend during docker build
-ENV DEBIAN_FRONTEND=noninteractive \
-    DEBCONF_NONINTERACTIVE_SEEN=true
-
 # SSH config.
 RUN mkdir -p /root/.ssh
 ADD config/ssh /root/.ssh/config
 RUN chown root:root /root/.ssh/config && chmod 600 /root/.ssh/config
+ADD google-chrome.repo /etc/yum.repos.d/google-chrome.repo
 
 # Install base.
-RUN apt-get update \
-  && apt-get -y install \
+RUN dnf upgrade --refresh -y \
+  && dnf groupinstall -y "Development Tools" "Development Libraries" \
+  && dnf install -y \
   bash \
-  build-essential \
   bzip2 \
   ca-certificates \
   curl \
@@ -31,50 +24,29 @@ RUN apt-get update \
   grep \
   gzip \
   jq \
-  language-pack-en-base \
-  libbz2-dev \
-  libffi-dev \
-  libfreetype6 \
-  libfreetype6-dev \
-  libmcrypt-dev \
-  libnss3-tools \
-  libpng-dev \
-  libxml2-dev \
-  libxslt-dev \
+  bzip2-devel \
+  libffi-devel \
+  freetype \
+  freetype-devel \
+  libmcrypt-devel \
+  libpng-devel \
+  libxml2-devel \
+  libxslt-devel \
   make \
-  mysql-client \
-  openssh-client \
+  openssh \
   openssl \
   patch \
   procps \
-  postgresql-client \
-  python \
-  python-crcmod \
-  python-pip \
-  python-wheel \
-  python3-crcmod \
   python3-pip \
-  python-wheel \
+  python3-wheel \
   rsync \
-  software-properties-common \
   sqlite \
   strace \
   tar \
   tzdata \
   unzip \
   wget \
-  && rm -rf /var/lib/apt/lists/* \
-  && pip install yq requests
-
-ENV LANGUAGE=en
-ENV LC_ALL=en_US.UTF-8
-ENV LANG=en_US.UTF-8
-
-RUN locale-gen en_US.UTF-8
-
-ENV TZ "UTC"
-RUN echo "${TZ}" > /etc/timezone \
-  && dpkg-reconfigure --frontend noninteractive tzdata
+  && pip3 install yq requests
 
 COPY --from=hairyhenderson/gomplate:v3.1.0-slim /gomplate /bin/gomplate
 
@@ -87,21 +59,15 @@ RUN curl --fail -sSL -o goofys https://github.com/kahing/goofys/releases/downloa
 
 # Install fd
 ENV FD_VERSION 7.2.0
-RUN curl --fail -sSL -o fd.tar.gz https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-x86_64-unknown-linux-musl.tar.gz \
+RUN curl --fail -sSL -o fd.tar.gz https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-x86_64-unknown-linux-gnu.tar.gz \
   && tar -zxf fd.tar.gz \
-  && cp fd-v${FD_VERSION}-x86_64-unknown-linux-musl/fd /usr/local/bin/ \
+  && cp fd-v${FD_VERSION}-x86_64-unknown-linux-gnu/fd /usr/local/bin/ \
   && rm -f fd.tar.gz \
-  && rm -fR fd-v${FD_VERSION}-x86_64-unknown-linux-musl \
+  && rm -fR fd-v${FD_VERSION}-x86_64-unknown-linux-gnu \
   && chmod +x /usr/local/bin/fd
 
 ARG CHROME_VERSION="google-chrome-stable"
-RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
-  && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list \
-  && apt-get update -qqy \
-  && apt-get -qqy install \
-    ${CHROME_VERSION:-google-chrome-stable} \
-  && rm /etc/apt/sources.list.d/google-chrome.list \
-  && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+RUN dnf install --refresh -y ${CHORME_VERSION:-google-chrome-stable}
 
 ARG CHROME_DRIVER_VERSION="latest"
 RUN CD_VERSION=$(if [ ${CHROME_DRIVER_VERSION:-latest} = "latest" ]; then echo $(wget -qO- https://chromedriver.storage.googleapis.com/LATEST_RELEASE); else echo $CHROME_DRIVER_VERSION; fi) \
@@ -115,12 +81,9 @@ RUN CD_VERSION=$(if [ ${CHROME_DRIVER_VERSION:-latest} = "latest" ]; then echo $
   && ln -fs /opt/chromedriver-$CD_VERSION /usr/bin/chromedriver
 
 # Install nodejs & grunt.
-RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
-  && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
-  && echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list \
-  && apt-get update \
-  && apt-get install -y nodejs yarn \
-  && rm -rf /var/lib/apt/lists/* \
+RUN curl -sL https://rpm.nodesource.com/setup_10.x | bash - \
+  && curl -sL https://dl.yarnpkg.com/rpm/yarn.repo | sudo tee /etc/yum.repos.d/yarn.repo \
+  && dnf install --refresh -y nodejs yarn \
   && npm install -g gulp-cli grunt-cli bower lighthouse \
   && grunt --version \
   && gulp --version \
