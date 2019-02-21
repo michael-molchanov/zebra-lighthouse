@@ -82,7 +82,7 @@ RUN CD_VERSION=$(if [ ${CHROME_DRIVER_VERSION:-latest} = "latest" ]; then echo $
 
 # Install nodejs & grunt.
 RUN curl -sL https://rpm.nodesource.com/setup_10.x | bash - \
-  && curl -sL https://dl.yarnpkg.com/rpm/yarn.repo | sudo tee /etc/yum.repos.d/yarn.repo \
+  && curl -sL https://dl.yarnpkg.com/rpm/yarn.repo | tee /etc/yum.repos.d/yarn.repo \
   && dnf install --refresh -y nodejs yarn \
   && npm install -g gulp-cli grunt-cli bower lighthouse \
   && grunt --version \
