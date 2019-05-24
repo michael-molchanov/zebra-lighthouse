@@ -66,6 +66,16 @@ RUN curl --fail -sSL -o fd.tar.gz https://github.com/sharkdp/fd/releases/downloa
   && rm -fR fd-v${FD_VERSION}-x86_64-unknown-linux-gnu \
   && chmod +x /usr/local/bin/fd
 
+# Install variant
+ENV VARIANT_VERSION 0.29.0
+RUN curl --fail -sSL -o variant.tar.gz https://github.com/mumoshu/variant/releases/download/v${VARIANT_VERSION}/variant_${VARIANT_VERSION}_linux_amd64.tar.gz \
+    && mkdir -p variant \
+    && tar -zxf variant.tar.gz -C variant \
+    && cp variant/variant /usr/local/bin/ \
+    && rm -f variant.tar.gz \
+    && rm -fR variant \
+    && chmod +x /usr/local/bin/variant
+
 ARG CHROME_VERSION="google-chrome-stable"
 RUN dnf install --refresh -y ${CHORME_VERSION:-google-chrome-stable}
 
