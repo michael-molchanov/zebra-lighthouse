@@ -58,7 +58,7 @@ RUN curl --fail -sSL -o goofys https://github.com/kahing/goofys/releases/downloa
 
 
 # Install fd
-ENV FD_VERSION 7.2.0
+ENV FD_VERSION 7.3.0
 RUN curl --fail -sSL -o fd.tar.gz https://github.com/sharkdp/fd/releases/download/v${FD_VERSION}/fd-v${FD_VERSION}-x86_64-unknown-linux-gnu.tar.gz \
   && tar -zxf fd.tar.gz \
   && cp fd-v${FD_VERSION}-x86_64-unknown-linux-gnu/fd /usr/local/bin/ \
@@ -67,7 +67,7 @@ RUN curl --fail -sSL -o fd.tar.gz https://github.com/sharkdp/fd/releases/downloa
   && chmod +x /usr/local/bin/fd
 
 # Install variant
-ENV VARIANT_VERSION 0.30.0
+ENV VARIANT_VERSION 0.31.0
 RUN curl --fail -sSL -o variant.tar.gz https://github.com/mumoshu/variant/releases/download/v${VARIANT_VERSION}/variant_${VARIANT_VERSION}_linux_amd64.tar.gz \
     && mkdir -p variant \
     && tar -zxf variant.tar.gz -C variant \
